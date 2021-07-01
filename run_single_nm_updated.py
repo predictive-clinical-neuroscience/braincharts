@@ -18,7 +18,7 @@ from nm_utils import save_output, test_func, calibration_descriptives
 ###################################CONFIG #####################################
 
 data_dir = '/Users/andmar/data/sairut/data'
-save_im_path = '/Users/andmar/data/sairut/results/'
+out_dir = '/Users/andmar/data/sairut/results'
 
 df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_full_tr.csv'), index_col=0) 
 df_te = pd.read_csv(os.path.join(data_dir,'lifespan_full_te.csv'), index_col=0)
@@ -37,18 +37,16 @@ idp_ids_rh = df_te.columns.to_list()[90:165]
 idp_ids_sc = df_te.columns.to_list()[165:198]
 idp_ids_glob = df_te.columns.to_list()[208:216] + df_te.columns.to_list()[220:222]
 idp_ids_all = df_te.columns.to_list()[15:207] + df_te.columns.to_list()[208:222]
-idp_ids = ['lh_S_orbital_med-olfact_thickness']
 #idp_ids = ['lh_S_temporal_sup_thickness']
-#idp_ids = ['avg_thickness']
-#idp_ids = ['lh_S_suborbital_thickness']
-idp_ids = idp_ids_lh + idp_ids_rh + idp_ids_glob
+idp_ids = ['Left-Lateral-Ventricle']
+#idp_ids = ['rh_S_suborbital_thickness']
+#idp_ids = ['lh_S_orbital_med-olfact_thickness']
+#idp_ids = idp_ids_lh + idp_ids_rh + idp_ids_sc + idp_ids_glob
 
 # run switches
 show_plot = True
 force_refit = False
 outlier_thresh = 7
-
-# which type of model to run?
 cov_type = 'bspline'  # 'int', 'bspline' or None
 warp =  'WarpSinArcsinh'   # 'WarpBoxCox', 'WarpSinArcsinh'  or None
 sex = 0 # 1 = male 0 = female
@@ -64,12 +62,19 @@ xmin = -5 # boundaries for ages of UKB participants +/- 5
 xmax = 110
 
 ################################### RUN #######################################
-
 # create dummy data for visualisation
 xx = np.arange(xmin,xmax,0.5)
-X0_dummy = np.zeros((len(xx), 2))
-X0_dummy[:,0] = xx
-X0_dummy[:,1] = sex
+if len(cols_cov) == 1:
+    print('fitting sex specific model')
+    X0_dummy = np.zeros((len(xx), 1))
+    X0_dummy[:,0] = xx
+    df_tr = df_tr.loc[df_tr['sex']== sex]
+    df_te = df_te.loc[df_te['sex']== sex]
+else:
+    X0_dummy = np.zeros((len(xx), 2))
+    X0_dummy[:,0] = xx
+    X0_dummy[:,1] = sex
+    
 for sid, site in enumerate(cols_site):
     print('configuring dummy data for site',sid, site)
     site_ids = np.zeros((len(xx), len(cols_site)))
@@ -83,7 +88,7 @@ X_dummy = create_design_matrix(X0_dummy, xmin=xmin, xmax=xmax, site_cols=site_id
 np.savetxt(os.path.join(data_dir,'cov_bspline_dummy_mean.txt'), X_dummy)
 
 
-blr_metrics = pd.DataFrame(columns = ['eid', 'NLL', 'EV', 'MSLL', 'BIC'])
+blr_metrics = pd.DataFrame(columns = ['eid', 'NLL', 'EV', 'MSLL', 'BIC','Skew','Kurtosis'])
 nummer = 0
 for idp in idp_ids: 
     nummer = nummer + 1
@@ -203,9 +208,11 @@ for idp in idp_ids:
     for sid, site in enumerate(cols_site):
                 
         # plot the true test data points
-        idx = np.where(np.bitwise_and(X_te[:,2] == sex, X_te[:,sid+len(cols_cov)+1] !=0))
-    
-        # load training data (needed for MSLL)
+        if len(cols_cov) == 1:
+            # sex-specific model
+            idx = np.where(X_te[:,sid+len(cols_cov)+1] !=0)
+        else:
+            idx = np.where(np.bitwise_and(X_te[:,2] == sex, X_te[:,sid+len(cols_cov)+1] !=0))
         idx_dummy = np.bitwise_and(X_dummy[:,1] > X_te[idx,1].min(), X_dummy[:,1] < X_te[idx,1].max())
         
         # adjust the intercept
@@ -291,7 +298,7 @@ for idp in idp_ids:
         plt.ylabel(idp) 
         plt.title(idp)
         plt.xlim((0,90))
-        #plt.ylim((-1000,150000))
+        plt.ylim((-1000,120000))
         plt.savefig(os.path.join(idp_dir, out_name, 'centiles_' + str(sex)),  bbox_inches='tight')
         plt.show()
      
@@ -303,27 +310,29 @@ for idp in idp_ids:
     print('EV = ', metrics['EXPV'])
     print('MSLL = ', MSLL) 
     
+    Z = np.loadtxt(os.path.join(w_dir, 'Z_estimate.txt'))
+    [skew, sdskew, kurtosis, sdkurtosis, semean, sesd] = calibration_descriptives(Z)
+    
     blr_metrics.loc[len(blr_metrics)] = [idp, nm.neg_log_lik, 
-                                         metrics['EXPV'][0], MSLL[0], BIC]
+                                         metrics['EXPV'][0], MSLL[0], BIC,
+                                         skew, kurtosis]
   
     # save blr stuff
     save_output(idp_dir, os.path.join(idp_dir, out_name))
     
-    if show_plot:
-        Z = np.loadtxt(os.path.join(idp_dir, out_name, 'Z_estimate.txt'))
-        [skew, sdskew, kurtosis, sdkurtosis, semean, sesd] = calibration_descriptives(Z)
-        plt.figure()
-        plt.hist(Z, bins = 100, label = 'skew = ' + str(round(skew,3)) + ' kurtosis = ' + str(round(kurtosis,3)))
-        plt.title('Z_warp ' + idp)
-        plt.legend()
-        plt.savefig(os.path.join(idp_dir, out_name, 'Z_hist'),  bbox_inches='tight')
-        plt.show()
+    #if show_plot:
+        # plt.figure()
+        # plt.hist(Z, bins = 100, label = 'skew = ' + str(round(skew,3)) + ' kurtosis = ' + str(round(kurtosis,3)))
+        # plt.title('Z_warp ' + idp)
+        # plt.legend()
+        # plt.savefig(os.path.join(idp_dir, out_name, 'Z_hist'),  bbox_inches='tight')
+        # plt.show()
     
-        plt.figure()
-        sm.qqplot(Z, line = '45')
-        plt.savefig(os.path.join(idp_dir, out_name, 'Z_qq'),  bbox_inches='tight')
-        plt.show()
-#blr_metrics.to_pickle(os.path.join(data_dir,'metrics_' + out_name + '.pkl'))
+        # plt.figure()
+        # sm.qqplot(Z, line = '45')
+        # plt.savefig(os.path.join(idp_dir, out_name, 'Z_qq'),  bbox_inches='tight')
+        # plt.show()
+blr_metrics.to_pickle(os.path.join(data_dir,'metrics_' + out_name + '.pkl'))
 
 print(nm.blr.hyp)
 
