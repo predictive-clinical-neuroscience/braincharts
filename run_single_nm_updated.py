@@ -28,23 +28,9 @@ df_tr = df_tr.loc[df_tr['EstimatedTotalIntraCranialVol'] > 0.5]
 df_te = df_te.loc[df_te['EstimatedTotalIntraCranialVol'] > 0.5]
 
 cols_cov = ['age','sex']
-#cols_site = df_te.columns.to_list()[222:261]
 cols_site = df_te.columns.to_list()[225:304]
 cols = cols_cov + cols_site
 
-# # configure IDPs to use
-# idp_ids_lh = df_te.columns.to_list()[15:90]
-# idp_ids_rh = df_te.columns.to_list()[90:165]
-# idp_ids_sc = df_te.columns.to_list()[165:198]
-# idp_ids_glob = df_te.columns.to_list()[208:216] + df_te.columns.to_list()[220:222]
-# idp_ids_all = df_te.columns.to_list()[15:207] + df_te.columns.to_list()[208:222]
-# #idp_ids = ['lh_S_temporal_sup_thickness']
-# idp_ids = ['Left-Lateral-Ventricle']
-# idp_ids = ['rh_S_suborbital_thickness']
-# idp_ids = ['lh_S_orbital_med-olfact_thickness']
-# #idp_ids = idp_ids_lh + idp_ids_rh + idp_ids_sc + idp_ids_glob
-
-#idp_ids_lh = df_te.columns.to_list()[4:79]
 idp_ids_lh = df_te.columns.to_list()[3:78]
 idp_ids_rh = df_te.columns.to_list()[80:155]
 idp_ids_sc = df_te.columns.to_list()[155:187]
