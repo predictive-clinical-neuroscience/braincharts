@@ -20,33 +20,44 @@ from nm_utils import save_output, test_func, calibration_descriptives
 data_dir = '/Users/andmar/data/sairut/data'
 out_dir = '/Users/andmar/data/sairut/results'
 
-df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_full_tr.csv'), index_col=0) 
-df_te = pd.read_csv(os.path.join(data_dir,'lifespan_full_te.csv'), index_col=0)
+df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_tr.csv'), index_col=0) 
+df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te.csv'), index_col=0)
 
 # remove some bad subjects
 df_tr = df_tr.loc[df_tr['EstimatedTotalIntraCranialVol'] > 0.5]
 df_te = df_te.loc[df_te['EstimatedTotalIntraCranialVol'] > 0.5]
 
-cols_cov = ['age','sex'] #'avg_euler_centered_neg_sqrt']
-cols_site = df_te.columns.to_list()[222:261]#[234:270]
+cols_cov = ['age','sex']
+#cols_site = df_te.columns.to_list()[222:261]
+cols_site = df_te.columns.to_list()[225:304]
 cols = cols_cov + cols_site
 
-# configure IDPs to use
-idp_ids_lh = df_te.columns.to_list()[15:90]
-idp_ids_rh = df_te.columns.to_list()[90:165]
-idp_ids_sc = df_te.columns.to_list()[165:198]
-idp_ids_glob = df_te.columns.to_list()[208:216] + df_te.columns.to_list()[220:222]
-idp_ids_all = df_te.columns.to_list()[15:207] + df_te.columns.to_list()[208:222]
-#idp_ids = ['lh_S_temporal_sup_thickness']
-idp_ids = ['Left-Lateral-Ventricle']
-#idp_ids = ['rh_S_suborbital_thickness']
-#idp_ids = ['lh_S_orbital_med-olfact_thickness']
-#idp_ids = idp_ids_lh + idp_ids_rh + idp_ids_sc + idp_ids_glob
+# # configure IDPs to use
+# idp_ids_lh = df_te.columns.to_list()[15:90]
+# idp_ids_rh = df_te.columns.to_list()[90:165]
+# idp_ids_sc = df_te.columns.to_list()[165:198]
+# idp_ids_glob = df_te.columns.to_list()[208:216] + df_te.columns.to_list()[220:222]
+# idp_ids_all = df_te.columns.to_list()[15:207] + df_te.columns.to_list()[208:222]
+# #idp_ids = ['lh_S_temporal_sup_thickness']
+# idp_ids = ['Left-Lateral-Ventricle']
+# idp_ids = ['rh_S_suborbital_thickness']
+# idp_ids = ['lh_S_orbital_med-olfact_thickness']
+# #idp_ids = idp_ids_lh + idp_ids_rh + idp_ids_sc + idp_ids_glob
+
+#idp_ids_lh = df_te.columns.to_list()[4:79]
+idp_ids_lh = df_te.columns.to_list()[3:78]
+idp_ids_rh = df_te.columns.to_list()[80:155]
+idp_ids_sc = df_te.columns.to_list()[155:187]
+idp_ids_glob = ['SubCortGrayVol', 'TotalGrayVol', 'SupraTentorialVol', 
+                'SupraTentorialVolNotVent','BrainSegVol-to-eTIV', 'MaskVol-to-eTIV',
+                'avg_thickness', 'lhCerebralWhiteMatterVol', 'rhCerebralWhiteMatterVol']
+idp_ids = idp_ids_lh + idp_ids_rh + idp_ids_sc + idp_ids_glob
 
 # run switches
 show_plot = True
-force_refit = False
+force_refit = True
 outlier_thresh = 7
+
 cov_type = 'bspline'  # 'int', 'bspline' or None
 warp =  'WarpSinArcsinh'   # 'WarpBoxCox', 'WarpSinArcsinh'  or None
 sex = 0 # 1 = male 0 = female
@@ -68,8 +79,8 @@ if len(cols_cov) == 1:
     print('fitting sex specific model')
     X0_dummy = np.zeros((len(xx), 1))
     X0_dummy[:,0] = xx
-    df_tr = df_tr.loc[df_tr['sex']== sex]
-    df_te = df_te.loc[df_te['sex']== sex]
+    df_tr = df_tr.loc[df_tr['sex'] == sex]
+    df_te = df_te.loc[df_te['sex'] == sex]
 else:
     X0_dummy = np.zeros((len(xx), 2))
     X0_dummy[:,0] = xx
@@ -97,9 +108,7 @@ for idp in idp_ids:
     idp_dir = os.path.join(data_dir, idp)
     
     # set output dir 
-    out_name = 'blr'
-    if cov_type is not None:
-        out_name += '_' + cov_type
+    out_name = 'blr_' + cov_type
     if warp is not None:
         out_name += '_' + warp
     os.makedirs(os.path.join(idp_dir,out_name), exist_ok=True)
@@ -213,7 +222,11 @@ for idp in idp_ids:
             idx = np.where(X_te[:,sid+len(cols_cov)+1] !=0)
         else:
             idx = np.where(np.bitwise_and(X_te[:,2] == sex, X_te[:,sid+len(cols_cov)+1] !=0))
-        idx_dummy = np.bitwise_and(X_dummy[:,1] > X_te[idx,1].min(), X_dummy[:,1] < X_te[idx,1].max())
+        if len(idx[0]) == 0:
+            print('No data for site', sid, site, 'skipping...')
+            continue
+        else:
+            idx_dummy = np.bitwise_and(X_dummy[:,1] > X_te[idx,1].min(), X_dummy[:,1] < X_te[idx,1].max())
         
         # adjust the intercept
         if warp is None:
@@ -224,11 +237,7 @@ for idp in idp_ids:
         if show_plot:
             plt.scatter(X_te[idx,1], y_te_rescaled, s=4, color=clr, alpha = 0.05)   
         y_te_rescaled_all[idx] = y_te_rescaled
-    
-    #idx_all = np.where(X_te[:,2] == sex)
-    #sns.jointplot(x=X_te[idx_all,1].ravel(), y=np.log(y_te_rescaled_all[idx_all].ravel()), kind="hex")
-    #plt.hexbin(X_te[idx_all,1].ravel(), y_te_rescaled_all[idx_all].ravel(), cmap=plt.cm.Blues, gridsize=40, vmin=0, vmax=50)
-    
+
     if warp is None:
         if show_plot:
             plt.plot(xx, yhat, color = clr)
@@ -298,7 +307,7 @@ for idp in idp_ids:
         plt.ylabel(idp) 
         plt.title(idp)
         plt.xlim((0,90))
-        plt.ylim((-1000,120000))
+        #plt.ylim((-1000,120000))
         plt.savefig(os.path.join(idp_dir, out_name, 'centiles_' + str(sex)),  bbox_inches='tight')
         plt.show()
      
@@ -320,19 +329,20 @@ for idp in idp_ids:
     # save blr stuff
     save_output(idp_dir, os.path.join(idp_dir, out_name))
     
-    #if show_plot:
-        # plt.figure()
-        # plt.hist(Z, bins = 100, label = 'skew = ' + str(round(skew,3)) + ' kurtosis = ' + str(round(kurtosis,3)))
-        # plt.title('Z_warp ' + idp)
-        # plt.legend()
-        # plt.savefig(os.path.join(idp_dir, out_name, 'Z_hist'),  bbox_inches='tight')
-        # plt.show()
+    # if show_plot:
+    #     plt.figure()
+    #     plt.hist(Z, bins = 100, label = 'skew = ' + str(round(skew,3)) + ' kurtosis = ' + str(round(kurtosis,3)))
+    #     plt.title('Z_warp ' + idp)
+    #     plt.legend()
+    #     plt.savefig(os.path.join(idp_dir, out_name, 'Z_hist'),  bbox_inches='tight')
+    #     plt.show()
     
-        # plt.figure()
-        # sm.qqplot(Z, line = '45')
-        # plt.savefig(os.path.join(idp_dir, out_name, 'Z_qq'),  bbox_inches='tight')
-        # plt.show()
-blr_metrics.to_pickle(os.path.join(data_dir,'metrics_' + out_name + '.pkl'))
+    #     plt.figure()
+    #     sm.qqplot(Z, line = '45')
+    #     plt.savefig(os.path.join(idp_dir, out_name, 'Z_qq'),  bbox_inches='tight')
+    #     plt.show()
+
+#blr_metrics.to_pickle(os.path.join(data_dir,'metrics_' + out_name + '.pkl'))
 
 print(nm.blr.hyp)
 
