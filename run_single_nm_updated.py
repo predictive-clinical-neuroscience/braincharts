@@ -21,32 +21,64 @@ data_dir = '/Users/andmar/data/sairut/data'
 out_dir = '/Users/andmar/data/sairut/results'
 
 df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_tr.csv'), index_col=0) 
-df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te.csv'), index_col=0)
+#df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te.csv'), index_col=0)
+df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_patients_te.csv'), index_col=0)
+
+#df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_tr.csv'), index_col=0) 
+#df_te = pd.read_csv(os.path.join(data_dir,'lifespan_te.csv'), index_col=0)
+#df_tr['sex'] = df_tr['sex'] - 1
+#df_te['sex'] = df_te['sex'] - 1
 
 # remove some bad subjects
 df_tr = df_tr.loc[df_tr['EstimatedTotalIntraCranialVol'] > 0.5]
 df_te = df_te.loc[df_te['EstimatedTotalIntraCranialVol'] > 0.5]
 
 cols_cov = ['age','sex']
-cols_site = df_te.columns.to_list()[225:304]
+
+#cols_site = df_te.columns.to_list()[225:304]
+
+cols_site = df_te.columns[df_tr.columns.str.startswith("site_")].to_list()
+cols_site.remove('site_ID')
+cols_site.remove('site_ID_bin')
 cols = cols_cov + cols_site
 
-idp_ids_lh = df_te.columns.to_list()[3:78]
-idp_ids_rh = df_te.columns.to_list()[80:155]
-idp_ids_sc = df_te.columns.to_list()[155:187]
+#idp_ids_lh = df_te.columns.to_list()[3:78]
+#idp_ids_rh = df_te.columns.to_list()[80:155]
+#idp_ids_sc = df_te.columns.to_list()[155:187]
+
+idp_ids_lh = df_te.columns[df_tr.columns.str.startswith("lh_")].to_list()
+idp_ids_rh = df_te.columns[df_tr.columns.str.startswith("rh_")].to_list()
+if 'lh_euler' in idp_ids_lh:
+    idp_ids_lh.remove('lh_euler')
+if 'lh_euler_neg' in idp_ids_lh:
+    idp_ids_lh.remove('lh_euler_neg')
+if 'rh_euler' in idp_ids_rh:
+    idp_ids_rh.remove('rh_euler')
+if 'rh_euler_neg' in idp_ids_rh:
+    idp_ids_rh.remove('rh_euler_neg')   
+idp_ids_sc = ['Left-Lateral-Ventricle', 'Left-Inf-Lat-Vent', 'Left-Cerebellum-White-Matter',
+              'Left-Cerebellum-Cortex', 'Left-Thalamus-Proper', 'Left-Caudate',
+              'Left-Putamen', 'Left-Pallidum', '3rd-Ventricle', '4th-Ventricle',
+              'Brain-Stem', 'Left-Hippocampus', 'Left-Amygdala', 'CSF', 'Left-Accumbens-area',
+              'Left-VentralDC', 'Left-vessel', 'Left-choroid-plexus', 'Right-Lateral-Ventricle',
+              'Right-Inf-Lat-Vent', 'Right-Cerebellum-White-Matter', 'Right-Cerebellum-Cortex',
+              'Right-Thalamus-Proper', 'Right-Caudate', 'Right-Putamen', 'Right-Pallidum',
+              'Right-Hippocampus', 'Right-Amygdala', 'Right-Accumbens-area', 'Right-VentralDC',
+              'Right-vessel', 'Right-choroid-plexus']
 idp_ids_glob = ['SubCortGrayVol', 'TotalGrayVol', 'SupraTentorialVol', 
-                'SupraTentorialVolNotVent','BrainSegVol-to-eTIV', 'MaskVol-to-eTIV',
-                'avg_thickness', 'lhCerebralWhiteMatterVol', 'rhCerebralWhiteMatterVol']
+                'SupraTentorialVolNotVent', 'avg_thickness', 
+                'lhCerebralWhiteMatterVol', 'rhCerebralWhiteMatterVol']
 idp_ids = idp_ids_lh + idp_ids_rh + idp_ids_sc + idp_ids_glob
+idp_ids = idp_ids_glob
 
 # run switches
 show_plot = True
-force_refit = True
+force_refit = False
 outlier_thresh = 7
 
 cov_type = 'bspline'  # 'int', 'bspline' or None
 warp =  'WarpSinArcsinh'   # 'WarpBoxCox', 'WarpSinArcsinh'  or None
-sex = 0 # 1 = male 0 = female
+sex = 1 # 1 = male 0 = female
 if sex == 1: 
     clr = 'blue';
     sex_name = 'male'
@@ -149,7 +181,7 @@ for idp in idp_ids:
              estimate(cov_file_tr, resp_file_tr, testresp=resp_file_te, 
                       testcov=cov_file_te, alg='blr', configparam=1,
                       optimizer = 'l-bfgs-b', savemodel=True, standardize = False, 
-                      warp=warp, warp_reparam=True) # if verbose true see inbetween estimates 
+                      warp=warp, warp_reparam=True) 
     
     # set up the dummy covariates
     cov_file_dummy = os.path.join(data_dir, 'cov_' + cov_type + '_dummy')
@@ -219,7 +251,6 @@ for idp in idp_ids:
             y_te_rescaled = y_te[idx] - np.median(y_te[idx]) + np.median(yhat[idx_dummy])
         else:            
             y_te_rescaled = y_te[idx] - np.median(y_te[idx]) + np.median(med[idx_dummy])
-        #y_te_rescaled = y_te[idx]
         if show_plot:
             plt.scatter(X_te[idx,1], y_te_rescaled, s=4, color=clr, alpha = 0.05)   
         y_te_rescaled_all[idx] = y_te_rescaled
@@ -313,7 +344,7 @@ for idp in idp_ids:
                                          skew, kurtosis]
   
     # save blr stuff
-    save_output(idp_dir, os.path.join(idp_dir, out_name))
+    #save_output(idp_dir, os.path.join(idp_dir, out_name))
     
     # if show_plot:
     #     plt.figure()
@@ -328,7 +359,7 @@ for idp in idp_ids:
     #     plt.savefig(os.path.join(idp_dir, out_name, 'Z_qq'),  bbox_inches='tight')
     #     plt.show()
 
-#blr_metrics.to_pickle(os.path.join(data_dir,'metrics_' + out_name + '.pkl'))
+blr_metrics.to_pickle(os.path.join(data_dir,'metrics_' + out_name + '.pkl'))
 
 print(nm.blr.hyp)
 
