@@ -1,7 +1,9 @@
 import os
 import glob
 import numpy as np
+import pandas as pd
 import shutil
+import pickle
 
 #################################### FUNCTIONS ################################
 def calibration_descriptives(x):
@@ -55,3 +57,51 @@ def save_output(src_dir, dst_dir, savemodel=True):
 
 def test_func(x, epsilon, b):
         return np.sinh(b * np.arcsinh(x) + epsilon * b)
+    
+
+def remove_bad_subjects(df, qc):#qc_file):
+    
+    """
+    Removes low-quality subjects from multi-site data based on Euler characteristic 
+    measure.
+    
+    * Inputs:
+        - df: the data in a pandas' dataframe format.
+        - qc_file: the address of pickle file containing the euler charcteristics.
+    
+    * Outputs:
+        - df: the updated data after removing bad subjects.
+        - removed_subjects: the list of removed subjects.
+    """
+    
+    n = df.shape[0]
+    
+    #with open(qc_file, 'rb') as file:
+    #    qc = pickle.load(file)['qc_all']
+    #
+    #qc = qc.reindex(df.index, fill_value=0)
+    
+    euler_nums = qc['avg_en'].to_numpy(dtype=np.float32)
+    #sites = df['site'].to_numpy(dtype=np.int)
+    site_ids = pd.Series(df['site'], copy=True)
+    for i,s in enumerate(site_ids.unique()):
+        site_ids.loc[site_ids == s] = i
+    sites = site_ids.to_numpy(dtype=np.int)
+    subjects = qc.index
+    
+    for site in np.unique(sites):
+        euler_nums[sites==site] = np.sqrt(-(euler_nums[sites==site])) - np.median(np.sqrt(-(euler_nums[sites==site])))
+    
+    good_subjects = list(subjects[np.bitwise_or(euler_nums<=5, np.isnan(euler_nums))])
+    removed_subjects = list(subjects[euler_nums>5])
+    
+    good_subjects = list(set(good_subjects))
+    
+    #df = df.reindex(good_subjects)
+    #df = df.dropna()
+    dfout = df.loc[good_subjects]
+    
+    
+    print('%f of subjects are removed!'  %((n - df.shape[0]) / n )) 
+    
+    return dfout, removed_subjects

@@ -13,38 +13,26 @@ sns.set(style='whitegrid')
 
 from pcntoolkit.normative import estimate, predict, evaluate
 from pcntoolkit.util.utils import create_bspline_basis, compute_MSLL, create_design_matrix
-from nm_utils import save_output, test_func, calibration_descriptives
+from nm_utils import save_output, test_func, calibration_descriptives, remove_bad_subjects
 
 ###################################CONFIG #####################################
 
 data_dir = '/Users/andmar/data/sairut/data'
-out_dir = '/Users/andmar/data/sairut/results'
+out_dir = '/Users/andmar/data/sairut/braincharts/models'
 
 df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_tr.csv'), index_col=0) 
-#df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te.csv'), index_col=0)
-df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_patients_te.csv'), index_col=0)
-
-#df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_tr.csv'), index_col=0) 
-#df_te = pd.read_csv(os.path.join(data_dir,'lifespan_te.csv'), index_col=0)
-#df_tr['sex'] = df_tr['sex'] - 1
-#df_te['sex'] = df_te['sex'] - 1
+df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te.csv'), index_col=0)
+#df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_patients_te.csv'), index_col=0)
 
 # remove some bad subjects
+df_tr, bad_sub = remove_bad_subjects(df_tr, df_tr)
+df_te, bad_sub = remove_bad_subjects(df_te, df_te)
 df_tr = df_tr.loc[df_tr['EstimatedTotalIntraCranialVol'] > 0.5]
 df_te = df_te.loc[df_te['EstimatedTotalIntraCranialVol'] > 0.5]
 
 cols_cov = ['age','sex']
 
-#cols_site = df_te.columns.to_list()[225:304]
-
-cols_site = df_te.columns[df_tr.columns.str.startswith("site_")].to_list()
-cols_site.remove('site_ID')
-cols_site.remove('site_ID_bin')
-cols = cols_cov + cols_site
-
-#idp_ids_lh = df_te.columns.to_list()[3:78]
-#idp_ids_rh = df_te.columns.to_list()[80:155]
-#idp_ids_sc = df_te.columns.to_list()[155:187]
+site_ids =  sorted(set(df_tr['site'].to_list()))
 
 idp_ids_lh = df_te.columns[df_tr.columns.str.startswith("lh_")].to_list()
 idp_ids_rh = df_te.columns[df_tr.columns.str.startswith("rh_")].to_list()
@@ -69,22 +57,19 @@ idp_ids_glob = ['SubCortGrayVol', 'TotalGrayVol', 'SupraTentorialVol',
                 'SupraTentorialVolNotVent', 'avg_thickness', 
                 'lhCerebralWhiteMatterVol', 'rhCerebralWhiteMatterVol']
 idp_ids = idp_ids_lh + idp_ids_rh + idp_ids_sc + idp_ids_glob
-idp_ids = idp_ids_glob
+#idp_ids = ['Left-Lateral-Ventricle']
 
 # run switches
 show_plot = True
-force_refit = False
+force_refit = True
 outlier_thresh = 7
 
-cov_type = 'bspline'  # 'int', 'bspline' or None
 warp =  'WarpSinArcsinh'   # 'WarpBoxCox', 'WarpSinArcsinh'  or None
-sex = 1 # 1 = male 0 = female
+sex = 0 # 1 = male 0 = female
 if sex == 1: 
     clr = 'blue';
-    sex_name = 'male'
 else:
     clr = 'red'
-    sex_name = 'female'
 
 # limits for cubic B-spline basis 
 xmin = -5 # boundaries for ages of UKB participants +/- 5
@@ -104,18 +89,18 @@ else:
     X0_dummy[:,0] = xx
     X0_dummy[:,1] = sex
     
-for sid, site in enumerate(cols_site):
+for sid, site in enumerate(site_ids):
     print('configuring dummy data for site',sid, site)
-    site_ids = np.zeros((len(xx), len(cols_site)))
-    site_ids[:,sid] = 1
-    X_dummy = create_design_matrix(X0_dummy, xmin=xmin, xmax=xmax, site_cols=site_ids)
-    np.savetxt(os.path.join(data_dir,'cov_bspline_dummy_' + site + '.txt'), X_dummy)
+    #site_ids = np.zeros((len(xx), len(cols_site)))
+    #site_ids[:,sid] = 1
+    site_dummy = [site] * len(xx)
+    X_dummy = create_design_matrix(X0_dummy, xmin=xmin, xmax=xmax, site_ids=site_dummy, all_sites = site_ids)
+    np.savetxt(os.path.join(out_dir,'cov_bspline_dummy_' + site + '.txt'), X_dummy)
 
 print('configuring dummy data for mean')
-site_ids = np.zeros((len(xx), len(cols_site)))
-X_dummy = create_design_matrix(X0_dummy, xmin=xmin, xmax=xmax, site_cols=site_ids)
-np.savetxt(os.path.join(data_dir,'cov_bspline_dummy_mean.txt'), X_dummy)
-
+#site_ids = np.zeros((len(xx), len(site_ids)))
+X_dummy = create_design_matrix(X0_dummy, xmin=xmin, xmax=xmax, site_ids=None, all_sites = site_ids)
+np.savetxt(os.path.join(out_dir,'cov_bspline_dummy_mean.txt'), X_dummy)
 
 blr_metrics = pd.DataFrame(columns = ['eid', 'NLL', 'EV', 'MSLL', 'BIC','Skew','Kurtosis'])
 nummer = 0
@@ -123,13 +108,10 @@ for idp in idp_ids:
     nummer = nummer + 1
     print(nummer)
     print('Running IDP:', idp)
-    idp_dir = os.path.join(data_dir, idp)
+    idp_dir = os.path.join(out_dir, idp)
     
     # set output dir 
-    out_name = 'blr_' + cov_type
-    if warp is not None:
-        out_name += '_' + warp
-    os.makedirs(os.path.join(idp_dir,out_name), exist_ok=True)
+    os.makedirs(os.path.join(idp_dir), exist_ok=True)
     os.chdir(idp_dir)
     
     # configure and save the responses
@@ -155,48 +137,39 @@ for idp in idp_ids:
     resp_tr_skew = calibration_descriptives(np.loadtxt(resp_file_tr))[0]
     
     # configure and save the covariates
-    X_tr = create_design_matrix(df_tr[cols_cov].loc[nz_tr], site_cols = df_tr[cols_site].loc[nz_tr],
+    X_tr = create_design_matrix(df_tr[cols_cov].loc[nz_tr], site_ids = df_tr['site'].loc[nz_tr],
                                 basis = 'bspline', xmin = xmin, xmax = xmax)
-    X_te = create_design_matrix(df_te[cols_cov].loc[nz_te], site_cols = df_te[cols_site].loc[nz_te],
+    X_te = create_design_matrix(df_te[cols_cov].loc[nz_te], site_ids = df_te['site'].loc[nz_te],
                                 basis = 'bspline', xmin = xmin, xmax = xmax)
     
     np.savetxt(os.path.join(idp_dir, 'cov_bspline_tr.txt'), X_tr)
     np.savetxt(os.path.join(idp_dir, 'cov_bspline_te.txt'), X_te)
     
     # configure the covariates to use
-    cov_file_tr = os.path.join(idp_dir, 'cov_') + cov_type + '_tr.txt'
-    cov_file_te = os.path.join(idp_dir, 'cov_') + cov_type + '_te.txt'
+    cov_file_tr = os.path.join(idp_dir, 'cov_bspline_tr.txt')
+    cov_file_te = os.path.join(idp_dir, 'cov_bspline_te.txt')
 
-    w_dir = os.path.join(idp_dir, out_name)
-    if not force_refit and os.path.exists(os.path.join(w_dir, 'Models', 'NM_0_0_estimate.pkl')):
+    if not force_refit and os.path.exists(os.path.join(idp_dir, 'Models', 'NM_0_0_estimate.pkl')):
         print('Using pre-existing model')
     else:
-        w_dir = idp_dir
-        if warp == None:
-            estimate(cov_file_tr, resp_file_tr, testresp=resp_file_te, 
-                     testcov=cov_file_te, alg='blr', configparam=1,
-                     optimizer = 'l-bfgs-b', savemodel=True, standardize = False, 
-                     hetero_noise = True)
-        else: 
-             estimate(cov_file_tr, resp_file_tr, testresp=resp_file_te, 
-                      testcov=cov_file_te, alg='blr', configparam=1,
-                      optimizer = 'l-bfgs-b', savemodel=True, standardize = False, 
-                      warp=warp, warp_reparam=True) 
+        estimate(cov_file_tr, resp_file_tr, testresp=resp_file_te, 
+                 testcov=cov_file_te, alg='blr', optimizer = 'l-bfgs-b', 
+                 savemodel=True, warp=warp, warp_reparam=True) 
     
     # set up the dummy covariates
-    cov_file_dummy = os.path.join(data_dir, 'cov_' + cov_type + '_dummy')
+    cov_file_dummy = os.path.join(out_dir, 'cov_bspline_dummy')
     cov_file_dummy = cov_file_dummy + '_mean.txt'
     
     # make predictions
     yhat, s2 = predict(cov_file_dummy, alg='blr', respfile=None, 
-                       model_path=os.path.join(w_dir,'Models'))
+                       model_path=os.path.join(idp_dir,'Models'))
     
-    with open(os.path.join(w_dir,'Models', 'NM_0_0_estimate.pkl'), 'rb') as handle:
+    with open(os.path.join(idp_dir,'Models', 'NM_0_0_estimate.pkl'), 'rb') as handle:
         nm = pickle.load(handle) 
     
     # load test data
-    yhat_te = np.loadtxt(os.path.join(w_dir, 'yhat_estimate.txt'))
-    s2_te = np.loadtxt(os.path.join(w_dir, 'ys2_estimate.txt'))
+    yhat_te = np.loadtxt(os.path.join(idp_dir, 'yhat_estimate.txt'))
+    s2_te = np.loadtxt(os.path.join(idp_dir, 'ys2_estimate.txt'))
     yhat_te = yhat_te[:, np.newaxis]
     s2_te = s2_te[:, np.newaxis]
     X_te = np.loadtxt(cov_file_te)
@@ -232,7 +205,7 @@ for idp in idp_ids:
         MSLL = compute_MSLL(y_te_w, yhat_te, s2_te, y_tr_mean, y_tr_var)     
   
     y_te_rescaled_all = np.zeros_like(y_te)
-    for sid, site in enumerate(cols_site):
+    for sid, site in enumerate(site_ids):
                 
         # plot the true test data points
         if len(cols_cov) == 1:
@@ -325,7 +298,7 @@ for idp in idp_ids:
         plt.title(idp)
         plt.xlim((0,90))
         #plt.ylim((-1000,120000))
-        plt.savefig(os.path.join(idp_dir, out_name, 'centiles_' + str(sex)),  bbox_inches='tight')
+        plt.savefig(os.path.join(idp_dir, 'centiles_' + str(sex)),  bbox_inches='tight')
         plt.show()
      
     BIC = len(nm.blr.hyp) * np.log(y_tr.shape[0]) + 2 * nm.neg_log_lik
@@ -336,30 +309,27 @@ for idp in idp_ids:
     print('EV = ', metrics['EXPV'])
     print('MSLL = ', MSLL) 
     
-    Z = np.loadtxt(os.path.join(w_dir, 'Z_estimate.txt'))
+    Z = np.loadtxt(os.path.join(idp_dir, 'Z_estimate.txt'))
     [skew, sdskew, kurtosis, sdkurtosis, semean, sesd] = calibration_descriptives(Z)
     
     blr_metrics.loc[len(blr_metrics)] = [idp, nm.neg_log_lik, 
                                          metrics['EXPV'][0], MSLL[0], BIC,
                                          skew, kurtosis]
-  
-    # save blr stuff
-    #save_output(idp_dir, os.path.join(idp_dir, out_name))
-    
-    # if show_plot:
-    #     plt.figure()
-    #     plt.hist(Z, bins = 100, label = 'skew = ' + str(round(skew,3)) + ' kurtosis = ' + str(round(kurtosis,3)))
-    #     plt.title('Z_warp ' + idp)
-    #     plt.legend()
-    #     plt.savefig(os.path.join(idp_dir, out_name, 'Z_hist'),  bbox_inches='tight')
-    #     plt.show()
-    
-    #     plt.figure()
-    #     sm.qqplot(Z, line = '45')
-    #     plt.savefig(os.path.join(idp_dir, out_name, 'Z_qq'),  bbox_inches='tight')
-    #     plt.show()
 
-blr_metrics.to_pickle(os.path.join(data_dir,'metrics_' + out_name + '.pkl'))
+    if show_plot:
+        plt.figure()
+        plt.hist(Z, bins = 100, label = 'skew = ' + str(round(skew,3)) + ' kurtosis = ' + str(round(kurtosis,3)))
+        plt.title('Z_warp ' + idp)
+        plt.legend()
+        plt.savefig(os.path.join(idp_dir,'Z_hist'),  bbox_inches='tight')
+        plt.show()
+    
+        plt.figure()
+        sm.qqplot(Z, line = '45')
+        plt.savefig(os.path.join(idp_dir, 'Z_qq'),  bbox_inches='tight')
+        plt.show()
+
+blr_metrics.to_pickle(os.path.join(out_dir,'blr_metrics.pkl'))
 
 print(nm.blr.hyp)
 
