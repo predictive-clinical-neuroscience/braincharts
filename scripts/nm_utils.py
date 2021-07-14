@@ -177,7 +177,7 @@ def retrieve_eulernum(freesurfer_dir, subjects=None):
              
     return df, missing_subjects
 
-def load_atleast_2d(filename):
+def load_2d(filename):
     """ this simple function loads a data type supported by PCNtoolkit and
         ensures that the output is a 2d numpy array
     """
