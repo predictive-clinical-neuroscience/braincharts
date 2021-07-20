@@ -20,8 +20,8 @@ out_dir = os.path.join(root_dir,'models','test')
 #df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te.csv'), index_col=0)
 #df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_patients_te.csv'), index_col=0)
 
-df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_tr_qc.csv'), index_col=0) 
-df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te_qc.csv'), index_col=0)
+df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_tr_mqc.csv'), index_col=0) 
+df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te_mqc.csv'), index_col=0)
 #df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_patients_te.csv'), index_col=0)
 
 df_tr = pd.concat((df_tr, df_te))
@@ -44,11 +44,11 @@ with open(os.path.join(root_dir,'docs','phenotypes_sc.txt')) as f:
     
 idp_ids = idp_ids_lh + idp_ids_rh + idp_ids_sc
 #idp_ids = idp_ids_sc
-#idp_ids = ['lh_MeanThickness_thickness', 'rh_MeanThickness_thickness']
+idp_ids = ['avg_thickness']
 
 # run switches
 show_plot = True
-force_refit = True
+force_refit = False
 
 outlier_thresh = 7
 
@@ -216,6 +216,7 @@ for nummer, idp in enumerate(idp_ids):
             y_te_rescaled = y_te[idx] - np.median(y_te[idx]) + np.median(med[idx_dummy])
         if show_plot:
             plt.scatter(X_te[idx,1], y_te_rescaled, s=4, color=clr, alpha = 0.05)   
+        
         y_te_rescaled_all[idx] = y_te_rescaled
 
     # plot the centiles
