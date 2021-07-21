@@ -26,6 +26,8 @@ def calibration_descriptives(x):
   cd = [skew, sdskew, kurtosis, sdkurtosis, semean, sesd]
   return cd
 
+
+    
 def save_output(src_dir, dst_dir, savemodel=True):
   
     # move everything else to the destination dir
@@ -56,6 +58,46 @@ def save_output(src_dir, dst_dir, savemodel=True):
         fdir, fnam = os.path.split(f)
         shutil.move(f, os.path.join(dst_dir,fnam))
     return
+
+def predict_on_new_sites(blr, hyp, X, y, Xs=None, 
+                         ys=None, 
+                         var_groups_test=None):
+    """ Function to transfer the model to a new site"""
+    # Get predictions from old model on new data X
+    ys_ref, s2_ref = blr.predict(hyp, None, None, X)
+
+    # Subtract the predictions from true data to get the residuals
+    if blr.warp is None:
+        residuals = ys_ref-y
+    else:
+        # Calculate the residuals in warped space
+        y_ref_ws = blr.warp.f(y, hyp[1:blr.warp.get_n_params()+1])
+        residuals = ys_ref - y_ref_ws 
+  
+    residuals_mu = np.mean(residuals)
+    residuals_sd = np.std(residuals)
+
+    # Adjust the mean with the mean of the residuals
+    #blr.m = blr.m-np.ones((len(blr.m)))*residuals_mu 
+    #ys,s2 = blr.predict(hyp, None, None, Xs)
+    if ys is None:
+        if Xs is None:
+            raise(ValueError, 'Either ys or Xs must be specified')
+        else:
+            ys, s2 = blr.predict(hyp, None, None, Xs)
+            ys = ys - residuals_mu 
+    else:
+        if blr.warp is not None:
+            y_ws = blr.warp.f(y, hyp[1:blr.warp.get_n_params()+1])
+            ys = y_ws - residuals_mu 
+        else:
+            ys = ys - residuals_mu    
+        
+    # Set the deviation to the devations of the residuals
+    s2 = np.ones(len(s2))*residuals_sd**2
+        
+    return ys, s2, z
+        
 
 def test_func(x, epsilon, b):
         return np.sinh(b * np.arcsinh(x) + epsilon * b)
