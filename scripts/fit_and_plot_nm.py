@@ -14,7 +14,7 @@ from nm_utils import calibration_descriptives, remove_bad_subjects
 
 data_dir = '/Users/andmar/data/sairut/data'
 root_dir = '/Users/andmar/data/sairut/braincharts'
-out_dir = os.path.join(root_dir,'models','test')
+out_dir = os.path.join(root_dir,'models','lifespan_29K_82sites_train')
 
 df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_tr.csv'), index_col=0) 
 df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te.csv'), index_col=0)
@@ -47,7 +47,7 @@ with open(os.path.join(root_dir,'docs','phenotypes_sc.txt')) as f:
     
 idp_ids = idp_ids_lh + idp_ids_rh + idp_ids_sc
 #idp_ids = idp_ids_sc
-#idp_ids = ['Left-vessel']
+idp_ids = ['lh_S_circular_insula_sup']
 
 # run switches
 show_plot = True
@@ -56,11 +56,11 @@ force_refit = False
 outlier_thresh = 7
 
 warp =  'WarpSinArcsinh'   # 'WarpBoxCox', 'WarpSinArcsinh'  or None
-sex =  1 # 1 = male 0 = female
+sex =  0 # 1 = male 0 = female
 if sex == 0: 
-    clr = 'blue';
+    clr = 'red';
 else:
-    clr = 'red'
+    clr = 'blue'
 
 # limits for cubic B-spline basis 
 xmin = -5 # boundaries for ages of UKB participants +/- 5
@@ -292,6 +292,7 @@ for nummer, idp in enumerate(idp_ids):
         plt.ylabel(idp) 
         plt.title(idp)
         plt.xlim((0,90))
+        plt.ylim((350000,990000))
         plt.savefig(os.path.join(idp_dir, 'centiles_' + str(sex)),  bbox_inches='tight')
         plt.show()
      
