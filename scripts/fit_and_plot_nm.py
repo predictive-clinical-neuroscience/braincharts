@@ -47,7 +47,7 @@ with open(os.path.join(root_dir,'docs','phenotypes_sc.txt')) as f:
     
 idp_ids = idp_ids_lh + idp_ids_rh + idp_ids_sc
 #idp_ids = idp_ids_sc
-idp_ids = ['lh_S_circular_insula_sup']
+idp_ids = ['Left-Cerebellum-White-Matter']
 
 # run switches
 show_plot = True
@@ -56,7 +56,7 @@ force_refit = False
 outlier_thresh = 7
 
 warp =  'WarpSinArcsinh'   # 'WarpBoxCox', 'WarpSinArcsinh'  or None
-sex =  0 # 1 = male 0 = female
+sex = 0 # 1 = male 0 = female
 if sex == 0: 
     clr = 'red';
 else:
@@ -292,7 +292,7 @@ for nummer, idp in enumerate(idp_ids):
         plt.ylabel(idp) 
         plt.title(idp)
         plt.xlim((0,90))
-        plt.ylim((350000,990000))
+        #plt.ylim((350000,990000))
         plt.savefig(os.path.join(idp_dir, 'centiles_' + str(sex)),  bbox_inches='tight')
         plt.show()
      
