@@ -96,7 +96,7 @@ def predict_on_new_sites(blr, hyp, X, y, Xs=None,
     # Set the deviation to the devations of the residuals
     s2 = np.ones(len(s2))*residuals_sd**2
         
-    return ys, s2, z
+    return ys, s2
         
 
 def test_func(x, epsilon, b):

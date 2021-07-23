@@ -20,15 +20,18 @@ out_dir = os.path.join(root_dir,'models','test')
 #df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te.csv'), index_col=0)
 #df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_patients_te.csv'), index_col=0)
 
-df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_tr_mqc.csv'), index_col=0) 
-df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te_mqc.csv'), index_col=0)
+#df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_tr_mqc.csv'), index_col=0) 
+#df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te_mqc.csv'), index_col=0)
 #df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_patients_te.csv'), index_col=0)
+
+df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_tr_mqc2.csv'), index_col=0) 
+df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te_mqc2.csv'), index_col=0)
 
 df_tr = pd.concat((df_tr, df_te))
 
 # remove some bad subjects
-df_tr, bad_sub = remove_bad_subjects(df_tr, df_tr)
-df_te, bad_sub = remove_bad_subjects(df_te, df_te)
+#df_tr, bad_sub = remove_bad_subjects(df_tr, df_tr)
+#df_te, bad_sub = remove_bad_subjects(df_te, df_te)
 
 cols_cov = ['age','sex']
 
@@ -44,7 +47,7 @@ with open(os.path.join(root_dir,'docs','phenotypes_sc.txt')) as f:
     
 idp_ids = idp_ids_lh + idp_ids_rh + idp_ids_sc
 #idp_ids = idp_ids_sc
-idp_ids = ['avg_thickness']
+#idp_ids = ['Left-vessel']
 
 # run switches
 show_plot = True
@@ -54,7 +57,7 @@ outlier_thresh = 7
 
 warp =  'WarpSinArcsinh'   # 'WarpBoxCox', 'WarpSinArcsinh'  or None
 sex =  1 # 1 = male 0 = female
-if sex == 1: 
+if sex == 0: 
     clr = 'blue';
 else:
     clr = 'red'
@@ -105,8 +108,8 @@ for nummer, idp in enumerate(idp_ids):
     # remove gross outliers
     yz_tr = (y_tr - np.mean(y_tr)) / np.std(y_tr)
     yz_te = (y_te - np.mean(y_te)) / np.std(y_te)
-    nz_tr = np.abs(yz_tr) < outlier_thresh
-    nz_te = np.abs(yz_te) < outlier_thresh
+    nz_tr = np.bitwise_and(np.abs(yz_tr) < outlier_thresh, y_tr > 0)
+    nz_te = np.bitwise_and(np.abs(yz_te) < outlier_thresh, y_te > 0)
     y_tr = y_tr[nz_tr]
     y_te = y_te[nz_te]
     
@@ -289,7 +292,6 @@ for nummer, idp in enumerate(idp_ids):
         plt.ylabel(idp) 
         plt.title(idp)
         plt.xlim((0,90))
-        #plt.ylim((-1000,120000))
         plt.savefig(os.path.join(idp_dir, 'centiles_' + str(sex)),  bbox_inches='tight')
         plt.show()
      
@@ -324,5 +326,5 @@ for nummer, idp in enumerate(idp_ids):
     #     plt.savefig(os.path.join(idp_dir, 'Z_qq'),  bbox_inches='tight')
     #     plt.show()
 
-blr_metrics.to_pickle(os.path.join(out_dir,'blr_metrics.pkl'))
+blr_metrics.to_csv(os.path.join(out_dir,'blr_metrics.csv'))
 
