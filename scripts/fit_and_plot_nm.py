@@ -14,10 +14,10 @@ from nm_utils import calibration_descriptives, remove_bad_subjects
 
 data_dir = '/Users/andmar/data/sairut/data'
 root_dir = '/Users/andmar/data/sairut/braincharts'
-out_dir = os.path.join(root_dir,'models','lifespan_29K_82sites_train')
+out_dir = os.path.join(root_dir,'models','lifespan_29K_82sites_train_MQC2')
 
 df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_tr.csv'), index_col=0) 
-df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te.csv'), index_col=0)
+#df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te.csv'), index_col=0)
 #df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_patients_te.csv'), index_col=0)
 
 #df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_tr_mqc.csv'), index_col=0) 
@@ -25,13 +25,18 @@ df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te.csv'), index
 #df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_patients_te.csv'), index_col=0)
 
 #df_tr = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_tr_mqc2.csv'), index_col=0) 
-#df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te_mqc2.csv'), index_col=0)
-
-#df_tr = pd.concat((df_tr, df_te))
+df_te = pd.read_csv(os.path.join(data_dir,'lifespan_big_controls_te_mqc2.csv'), index_col=0)
+# remove some severe outliers in the MQC2 sample
+df_tr = df_tr.loc[df_tr['SubCortGrayVol'] > 20000]
+df_tr = df_tr.loc[df_tr['SubCortGrayVol'] < 90000]
+df_te = df_te.loc[df_te['SubCortGrayVol'] > 20000]
+df_te = df_te.loc[df_te['SubCortGrayVol'] < 90000]
 
 # remove some bad subjects
-#df_tr, bad_sub = remove_bad_subjects(df_tr, df_tr)
-#df_te, bad_sub = remove_bad_subjects(df_te, df_te)
+df_tr, bad_sub = remove_bad_subjects(df_tr, df_tr)
+df_te, bad_sub = remove_bad_subjects(df_te, df_te)
+
+#df_tr = pd.concat((df_tr, df_te))
 
 cols_cov = ['age','sex']
 
@@ -47,7 +52,7 @@ with open(os.path.join(root_dir,'docs','phenotypes_sc.txt')) as f:
     
 idp_ids = idp_ids_lh + idp_ids_rh + idp_ids_sc
 #idp_ids = idp_ids_sc
-idp_ids = ['Left-Cerebellum-White-Matter']
+#idp_ids = ['SubCortGrayVol']
 
 # run switches
 show_plot = True
