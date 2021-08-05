@@ -1,7 +1,9 @@
 # braincharts
 
-## Pre-trained models, code, supporting files for
-## *Charting Brain Growth and Aging at High Spatial Precision*
+[![Gitter](https://badges.gitter.im/predictive-clinical-neuroscience/community.svg)](https://gitter.im/predictive-clinical-neuroscience/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) [![Documentation Status](https://readthedocs.org/projects/pcntoolkit/badge/?version=latest)](https://pcntoolkit.readthedocs.io/en/latest/?badge=latest)
+
+### Pre-trained models, code, supporting files for:
+### *Charting Brain Growth and Aging at High Spatial Precision*
 
 **Training the reference cohort** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/predictive-clinical-neuroscience/braincharts/blob/master/scripts/fit_normative_models.ipynb)
 
