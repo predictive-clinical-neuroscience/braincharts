@@ -34,5 +34,4 @@ SubCortGrayVol
 TotalGrayVol
 SupraTentorialVol
 SupraTentorialVolNotVent
-avg_thickness
 EstimatedTotalIntraCranialVol
