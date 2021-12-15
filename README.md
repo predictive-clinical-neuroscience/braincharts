@@ -35,13 +35,13 @@ Skew [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)
 
 **3. Patients test set**
 
-Explained Variance [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/saigerutherford/brainviz-app/blob/main/patients_EVviz.ipynb)
+Explained Variance [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/saigerutherford/brainviz-app/blob/main/patient_EVviz.ipynb)
 
-MSLL [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/saigerutherford/brainviz-app/blob/main/patients_MSLLviz.ipynb)
+MSLL [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/saigerutherford/brainviz-app/blob/main/patient_MSLLviz.ipynb)
 
-Kurtosis [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/saigerutherford/brainviz-app/blob/main/patients_Kurtosisviz.ipynb)
+Kurtosis [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/saigerutherford/brainviz-app/blob/main/patient_Kurtosisviz.ipynb)
 
-Skew [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/saigerutherford/brainviz-app/blob/main/patients_Skewviz.ipynb)
+Skew [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/saigerutherford/brainviz-app/blob/main/patient_Skewviz.ipynb)
 
 **4. Transfer test set**
 
