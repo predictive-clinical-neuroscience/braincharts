@@ -16,6 +16,8 @@ In press at [eLife](elifesciences.org/articles/72904).
 
 ## **Interactive visualizations of evaluation metrics:**
 
+[Heroku app for exploring explained variance](https://brainviz-app.herokuapp.com/)
+
 Click on the 'open in colab' button below to launch the interactive visualization and explore the evaluation metrics yourself. There is a separate visualization for each test set and evaluation metric. 
 
 ![](docs/eLife_interactive_viz.gif)
