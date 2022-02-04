@@ -4,7 +4,7 @@
 
 ## Pre-trained models, code, documentation, and supporting files for: 
 ### Charting Brain Growth and Aging at High Spatial Precision
-In press at [eLife](elifesciences.org/articles/72904).
+In press at [eLife](https://elifesciences.org/articles/72904).
 
 **Training the reference cohort** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/predictive-clinical-neuroscience/braincharts/blob/master/scripts/fit_normative_models.ipynb)
 
