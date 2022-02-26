@@ -76,6 +76,13 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+.theano
+.vscode
+.ipython
+.jupyter 
+.cache
+.config 
+.local 
 
 # IPython
 profile_default/
