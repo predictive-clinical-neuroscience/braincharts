@@ -13,7 +13,6 @@ HCP-Dev_WashU
 HCP-EP_BWH
 HCP-EP_IU
 UMich_IMPs
-UMich_SZG
 cam
 CBIC
 RU
