@@ -1,7 +1,5 @@
 AOMIC_PIPO1
 AOMIC_PIPO2
-CNP-35343.0
-CNP-35426.0
 HCP-Aging_MGH
 HCP-Aging_UCLA
 HCP-Aging_UMinn
@@ -10,13 +8,10 @@ HCP-Dev_MGH
 HCP-Dev_UCLA
 HCP-Dev_UMinn
 HCP-Dev_WashU
-HCP-EP_BWH
-HCP-EP_IU
 UMich_IMPs
 cam
 CBIC
 RU
-delta
 hcp_ya
 nki
 pnc
