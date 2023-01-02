@@ -1,6 +1,6 @@
 # PCNtoolkit braincharts
 
-[![Gitter](https://badges.gitter.im/predictive-clinical-neuroscience/community.svg)](https://gitter.im/predictive-clinical-neuroscience/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) [![Documentation Status](https://readthedocs.org/projects/pcntoolkit/badge/?version=latest)](https://pcntoolkit.readthedocs.io/en/latest/?badge=latest)
+[![Gitter](https://badges.gitter.im/predictive-clinical-neuroscience/community.svg)](https://gitter.im/predictive-clinical-neuroscience/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) [![Documentation Status](https://readthedocs.org/projects/pcntoolkit/badge/?version=latest)](https://pcntoolkit.readthedocs.io/en/latest/?badge=latest)[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7498971.svg)](https://doi.org/10.5281/zenodo.7498971)
 
 ## Pre-trained models, code, documentation, and supporting files for: 
 ### Charting Brain Growth and Aging at High Spatial Precision
