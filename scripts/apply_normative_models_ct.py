@@ -10,7 +10,6 @@
 # In[ ]:
 
 
-get_ipython().system(' pip install numpy==1.21')
 get_ipython().system(' pip install pcntoolkit')
 
 
