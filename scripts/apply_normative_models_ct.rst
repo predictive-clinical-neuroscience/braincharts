@@ -16,8 +16,7 @@ at least version 0.27)
 
 .. code:: ipython3
 
-    ! pip install numpy==1.21
-    ! pip install pcntoolkit==0.27
+    ! pip install pcntoolkit
 
 .. code:: ipython3
 
