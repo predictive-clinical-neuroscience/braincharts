@@ -125,7 +125,7 @@ def remove_bad_subjects(df, qc):#qc_file):
     site_ids = pd.Series(df['site'], copy=True)
     for i,s in enumerate(site_ids.unique()):
         site_ids.loc[site_ids == s] = i
-    sites = site_ids.to_numpy(dtype=np.int)
+    sites = site_ids.to_numpy(dtype=np.int32)
     subjects = qc.index
     for site in np.unique(sites):
         euler_nums[sites==site] = np.sqrt(-(euler_nums[sites==site])) - np.nanmedian(np.sqrt(-(euler_nums[sites==site])))
