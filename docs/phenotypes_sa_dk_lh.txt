@@ -31,3 +31,4 @@ L_supramarginal
 L_frontalpole
 L_temporalpole
 L_transversetemporal
+L_insula
